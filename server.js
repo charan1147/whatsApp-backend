@@ -2,8 +2,8 @@ import express from "express";
 import http from "http";
 import { Server } from "socket.io"; 
 import { connectDB } from "./config/db.js";
-import authRoutes  from "./routes/authRoutes.js";
-import  chatRoutes  from "./routes/chatRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
+import chatRoutes from "./routes/chatRoutes.js";
 import helmet from "helmet";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
@@ -25,7 +25,7 @@ connectDB();
 
 app.use(helmet()); 
 app.use(morgan("dev"));
-app.use(cors({ origin: "http://localhost:5713", credentials: true })); // CORS for HTTP requests
+app.use(cors({ origin: "http://localhost:5713", credentials: true }));
 app.use(cookieParser()); 
 app.use(express.json()); 
 
@@ -42,5 +42,5 @@ io.on("connection", (socket) => {
   });
 });
 
-const PORT = process.env.PORT 
+const PORT = process.env.PORT || 5013;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

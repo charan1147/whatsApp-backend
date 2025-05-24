@@ -1,21 +1,26 @@
-import jwt from "jsonwebtoken"
-import User from "../models/User.js";
-
+import jwt from 'jsonwebtoken';
+import User  from '../models/User.js';
 
 export const auth = async (req, res, next) => {
   try {
+    console.log('Auth middleware: Checking JWT cookie');
     const token = req.cookies.jwt;
     if (!token) {
-      return res.status(401).json({ error: 'No authorization token provided' });
+      console.log('Auth middleware: No JWT token found in cookies');
+      return res.status(401).json({ error: 'No authorization, token missing' });
     }
+    console.log('Auth middleware: Verifying JWT token');
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('Auth middleware: JWT verified, userId:', decoded.userId);
     const user = await User.findById(decoded.userId);
     if (!user) {
-      return res.status(401).json({ error: 'User not found' });
+      console.log('Auth middleware: User not found for userId:', decoded.userId);
+      return res.status(401).json({ error: 'No authorization, user not found' });
     }
     req.user = user;
     next();
-  } catch (error) {
-    res.status(401).json({ error: 'Invalid token' });
+  } catch (err) {
+    console.error('Auth middleware error:', err.message, err.stack);
+    res.status(401).json({ error: 'No authorization, invalid token' });
   }
 };

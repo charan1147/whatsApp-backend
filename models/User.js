@@ -1,10 +1,13 @@
 import mongoose from "mongoose";
-import bcrypt from "bcrypt"
+import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema({
   email: { type: String, unique: true, required: true },
   password: { type: String, required: true },
-  contacts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  contacts: [{
+    _id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    email: { type: String, required: true }
+  }],
 });
 
 userSchema.pre('save', async function (next) {
@@ -17,6 +20,6 @@ userSchema.methods.comparePassword = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
-const User=mongoose.model("User",userSchema)
+const User = mongoose.model("User", userSchema);
 
-export default User
+export default User;

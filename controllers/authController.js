@@ -1,80 +1,106 @@
 import User from '../models/User.js';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 export const register = async (req, res) => {
-  const { email, password } = req.body;
   try {
-    const user = new User({ email, password });
-    await user.save();
+    console.log('Register request received:', req.body);
+    const { email, password } = req.body;
+    if (!email || !password) {
+      console.log('Validation failed: Email or password missing');
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+    console.log('Checking for existing user:', email);
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      console.log('User already exists:', email);
+      return res.status(400).json({ error: 'User already exists' });
+    }
+    console.log('Creating new user:', email);
+    const user = await User.create({ email, password, contacts: [] });
+    console.log('User created successfully:', user.email);
     res.status(201).json({ message: 'User registered' });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
+  } catch (err) {
+    console.error('Register error:', err.message, err.stack);
+    res.status(500).json({ error: 'Server error' });
   }
 };
 
 export const login = async (req, res) => {
-  const { email, password } = req.body;
   try {
-    const user = await User.findOne({ email }).populate('contacts', 'email');
+    console.log('Login request received:', req.body);
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
     if (!user || !(await user.comparePassword(password))) {
+      console.log('Invalid credentials for:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
+    console.log('Generating JWT for:', email);
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
-    res.cookie('jwt', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000,
+    res.cookie('jwt', token, { 
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production', 
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     });
+    console.log('JWT cookie set for:', email);
     res.json({ user: { id: user._id, email: user.email, contacts: user.contacts } });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    console.error('Login error:', err.message, err.stack);
+    res.status(500).json({ error: 'Server error' });
   }
 };
 
 export const me = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).populate('contacts', 'email');
-    if (!user) {
+    console.log('Me request for user:', req.user.email);
+    res.json({ user: { id: req.user._id, email: req.user.email, contacts: req.user.contacts } });
+  } catch (err) {
+    console.error('Me error:', err.message, err.stack);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+export const addContact = async (req, res) => {
+  try {
+    console.log('Add contact request:', req.body);
+    const { email } = req.body;
+    const contact = await User.findOne({ email });
+    if (!contact) {
+      console.log('Contact not found:', email);
       return res.status(404).json({ error: 'User not found' });
     }
-    res.json({ user: { id: user._id, email: user.email, contacts: user.contacts } });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    if (contact._id.toString() === req.user._id.toString()) {
+      console.log('Cannot add self:', email);
+      return res.status(400).json({ error: 'Cannot add yourself' });
+    }
+    if (req.user.contacts.some((c) => c._id.toString() === contact._id.toString())) {
+      console.log('Contact already added:', email);
+      return res.status(400).json({ error: 'Contact already added' });
+    }
+    req.user.contacts.push({ _id: contact._id, email: contact.email });
+    contact.contacts.push({ _id: req.user._id, email: req.user.email });
+    await req.user.save();
+    await contact.save();
+    console.log('Contact added successfully:', email);
+    res.json({ message: 'Contact added', user: { id: req.user._id, email: req.user.email, contacts: req.user.contacts } });
+  } catch (err) {
+    console.error('Add contact error:', err.message, err.stack);
+    res.status(500).json({ error: 'Server error' });
   }
 };
 
 export const logout = async (req, res) => {
-  res.clearCookie('jwt', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-  });
-  res.json({ message: 'Logged out successfully' });
-};
-
-export const addContact = async (req, res) => {
-  const { email } = req.body;
   try {
-    const contact = await User.findOne({ email });
-    if (!contact) {
-      return res.status(404).json({ error: 'Contact not found' });
-    }
-    if (req.user.email === email) {
-      return res.status(400).json({ error: 'Cannot add yourself' });
-    }
-    if (req.user.contacts.includes(contact._id)) {
-      return res.status(400).json({ error: 'Contact already added' });
-    }
-    req.user.contacts.push(contact._id);
-    await req.user.save();
-    if (!contact.contacts.includes(req.user._id)) {
-      contact.contacts.push(req.user._id);
-      await contact.save();
-    }
-    const updatedUser = await User.findById(req.user._id).populate('contacts', 'email');
-    res.json({ contact: { id: contact._id, email: contact.email }, user: { id: updatedUser._id, email: updatedUser.email, contacts: updatedUser.contacts } });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.log('Logout request received');
+    res.clearCookie('jwt', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    });
+    console.log('JWT cookie cleared');
+    res.json({ message: 'Logged out successfully' });
+  } catch (err) {
+    console.error('Logout error:', err.message, err.stack);
+    res.status(500).json({ error: 'Server error' });
   }
 };

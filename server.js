@@ -16,18 +16,24 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5713", 
-    credentials: true, 
+    origin: ["http://localhost:5713", "https://localhost:5713"],
+    credentials: true,
+    methods: ["GET", "POST"]
   },
 });
 
 connectDB();
 
-app.use(helmet()); 
+app.use(helmet());
 app.use(morgan("dev"));
-app.use(cors({ origin: "http://localhost:5713", credentials: true }));
-app.use(cookieParser()); 
-app.use(express.json()); 
+app.use(cors({
+  origin: ["http://localhost:5713", "https://localhost:5713"],
+  credentials: true,
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+app.use(cookieParser());
+app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/chat", chatRoutes);

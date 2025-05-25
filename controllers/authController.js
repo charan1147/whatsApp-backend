@@ -26,27 +26,22 @@ export const register = async (req, res) => {
   }
 };
 
-export const login = async (req, res) => {
+const login = async (req, res) => {
+  const { email, password } = req.body;
   try {
-    console.log('Login request received:', req.body);
-    const { email, password } = req.body;
     const user = await User.findOne({ email });
-    if (!user || !(await user.comparePassword(password))) {
-      console.log('Invalid credentials for:', email);
-      return res.status(401).json({ error: 'Invalid credentials' });
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({ error: "Invalid credentials" });
     }
-    console.log('Generating JWT for:', email);
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "1d" });
     res.cookie('jwt', token, { 
       httpOnly: true, 
-      secure: process.env.NODE_ENV === 'production', 
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      secure: process.env.LOCAL_TESTING === 'true' ? false : process.env.NODE_ENV === 'production',
+      sameSite: process.env.LOCAL_TESTING === 'true' ? 'lax' : process.env.NODE_ENV === 'production' ? 'none' : 'lax'
     });
-    console.log('JWT cookie set for:', email);
     res.json({ user: { id: user._id, email: user.email, contacts: user.contacts } });
   } catch (err) {
-    console.error('Login error:', err.message, err.stack);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: err.message });
   }
 };
 

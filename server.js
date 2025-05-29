@@ -16,16 +16,13 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
+// Update allowedOrigins
 const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  "import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-
-export default defineConfig({
-  plugins: [react()],
-});",
-  "http://localhost:5713",
+  process.env.FRONTEND_URL, 
+  "http://localhost:5173", 
 ].filter(Boolean);
+
+
 
 const io = new Server(server, {
   cors: {
@@ -37,13 +34,19 @@ const io = new Server(server, {
 
 connectDB();
 
+
 app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'", ...allowedOrigins],
         scriptSrc: ["'self'", "'unsafe-inline'", ...allowedOrigins],
-        connectSrc: ["'self'", ...allowedOrigins],
+        connectSrc: [
+          "'self'",
+          ...allowedOrigins,
+          "https://whatsapp-backend-12.onrender.com", 
+          "wss://whatsapp-backend-12.onrender.com",   
+        ],
       },
     },
     crossOriginResourcePolicy: { policy: "cross-origin" },
@@ -114,5 +117,5 @@ io.on("connection", (socket) => {
   });
 });
 
-const PORT = process.env.PORT ;
+const PORT = process.env.PORT 
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

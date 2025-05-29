@@ -33,12 +33,8 @@ const io = new Server(server, {
 connectDB();
 
 // Define backend URLs based on environment
-const backendUrl = process.env.NODE_ENV === "production"
-  ? "https://whatsapp-backend-11.onrender.com"
-  : "http://localhost:5013";
-const wsBackendUrl = process.env.NODE_ENV === "production"
-  ? "wss://whatsapp-backend-11.onrender.com"
-  : "wss://localhost:5013";
+const backendUrl = "https://whatsapp-backend-14.onrender.com";
+const wsBackendUrl = "wss://whatsapp-backend-14.onrender.com";
 
 app.use(
   helmet({

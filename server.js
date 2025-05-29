@@ -16,13 +16,11 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-// Update allowedOrigins
+// Ensure allowedOrigins includes the Netlify URL
 const allowedOrigins = [
-  process.env.FRONTEND_URL, 
-  "http://localhost:5173", 
+  process.env.FRONTEND_URL, // Should be https://app-like-chatapp.netlify.app
+  "http://localhost:5173",  // For local testing
 ].filter(Boolean);
-
-
 
 const io = new Server(server, {
   cors: {
@@ -34,7 +32,6 @@ const io = new Server(server, {
 
 connectDB();
 
-
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -44,8 +41,8 @@ app.use(
         connectSrc: [
           "'self'",
           ...allowedOrigins,
-          "https://whatsapp-backend-12.onrender.com", 
-          "wss://whatsapp-backend-12.onrender.com",   
+          "https://whatsapp-backend-13.onrender.com",
+          "wss://whatsapp-backend-13.onrender.com",
         ],
       },
     },
@@ -117,5 +114,5 @@ io.on("connection", (socket) => {
   });
 });
 
-const PORT = process.env.PORT 
+const PORT = process.env.PORT || 5013;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

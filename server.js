@@ -18,8 +18,7 @@ const server = http.createServer(app);
 
 // Define allowedOrigins
 const allowedOrigins = [
-  process.env.FRONTEND_URL, // Should be https://app-like-chatapp.netlify.app
-  "http://localhost:5173",  // For local testing
+  process.env.FRONTEND_URL,
 ].filter(Boolean);
 
 const io = new Server(server, {
@@ -33,8 +32,8 @@ const io = new Server(server, {
 connectDB();
 
 // Define backend URLs based on environment
-const backendUrl = "https://whatsapp-backend-14.onrender.com";
-const wsBackendUrl = "wss://whatsapp-backend-14.onrender.com";
+const backendUrl = "https://whatsapp-backend-15.onrender.com";
+const wsBackendUrl = "wss://whatsapp-backend-15.onrender.com";
 
 app.use(
   helmet({

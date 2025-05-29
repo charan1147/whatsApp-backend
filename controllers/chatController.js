@@ -1,31 +1,25 @@
 import Message from "../models/Message.js";
 
-export const sendMessage = async (req, res) => {
-  const { receiver, content } = req.body;
-  try {
-    const message = new Message({
-      sender: req.user._id,
-      receiver,
-      content,
-    });
-    await message.save();
-    res.status(201).json(message);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+const sendResponse = (res, status, success, data, message = null) => {
+  res.status(status).json({ success, ...data, message });
 };
 
 export const getMessages = async (req, res) => {
   const { contactId } = req.params;
   try {
+    if (!contactId) {
+      return sendResponse(res, 400, false, {}, "Contact ID is required");
+    }
+
     const messages = await Message.find({
       $or: [
         { sender: req.user._id, receiver: contactId },
         { sender: contactId, receiver: req.user._id },
       ],
     }).sort({ createdAt: 1 });
-    res.json(messages);
+
+    sendResponse(res, 200, true, { messages }, "Messages retrieved successfully");
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendResponse(res, 500, false, {}, `Server error: ${error.message}`);
   }
 };

@@ -16,7 +16,7 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-// Ensure allowedOrigins includes the Netlify URL
+// Define allowedOrigins
 const allowedOrigins = [
   process.env.FRONTEND_URL, // Should be https://app-like-chatapp.netlify.app
   "http://localhost:5173",  // For local testing
@@ -32,6 +32,14 @@ const io = new Server(server, {
 
 connectDB();
 
+// Define backend URLs based on environment
+const backendUrl = process.env.NODE_ENV === "production"
+  ? "https://whatsapp-backend-11.onrender.com"
+  : "http://localhost:5013";
+const wsBackendUrl = process.env.NODE_ENV === "production"
+  ? "wss://whatsapp-backend-11.onrender.com"
+  : "wss://localhost:5013";
+
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -41,8 +49,8 @@ app.use(
         connectSrc: [
           "'self'",
           ...allowedOrigins,
-          "https://whatsapp-backend-13.onrender.com",
-          "wss://whatsapp-backend-13.onrender.com",
+          backendUrl,   // Allow API requests
+          wsBackendUrl, // Allow WebSocket (Socket.IO) connections
         ],
       },
     },

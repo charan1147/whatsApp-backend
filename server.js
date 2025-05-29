@@ -18,7 +18,12 @@ const server = http.createServer(app);
 
 const allowedOrigins = [
   process.env.FRONTEND_URL,
-  "http://localhost:5173",
+  "import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+
+export default defineConfig({
+  plugins: [react()],
+});",
   "http://localhost:5713",
 ].filter(Boolean);
 

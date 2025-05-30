@@ -18,12 +18,38 @@ const server = http.createServer(app);
 
 // Define allowedOrigins
 const allowedOrigins = [
-  process.env.FRONTEND_URL,
+  process.env.FRONTEND_URL || "https://app-like-chatapp.netlify.app",
 ].filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      console.log("API Request Origin:", origin); // Add logging
+      console.log("Allowed Origins:", allowedOrigins);
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.error("CORS error: Origin not allowed", origin);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      console.log("Socket.IO Request Origin:", origin);
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.error("Socket.IO CORS error: Origin not allowed", origin);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
     methods: ["GET", "POST"],
   },
@@ -32,8 +58,8 @@ const io = new Server(server, {
 connectDB();
 
 // Define backend URLs based on environment
-const backendUrl = "https://whatsapp-backend-15.onrender.com";
-const wsBackendUrl = "wss://whatsapp-backend-15.onrender.com";
+const backendUrl = "https://whatsapp-backend-16.onrender.com";
+const wsBackendUrl = "wss://whatsapp-backend-16.onrender.com";
 
 app.use(
   helmet({
@@ -44,9 +70,11 @@ app.use(
         connectSrc: [
           "'self'",
           ...allowedOrigins,
-          backendUrl,   // Allow API requests
-          wsBackendUrl, // Allow WebSocket (Socket.IO) connections
+          backendUrl,
+          wsBackendUrl,
+          "https://*.onrender.com", // Allow all subdomains of onrender.com
         ],
+        styleSrc: ["'self'", "'unsafe-inline'"], // Allow inline styles if needed
       },
     },
     crossOriginResourcePolicy: { policy: "cross-origin" },
@@ -54,22 +82,6 @@ app.use(
 );
 
 app.use(morgan("dev"));
-
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) === -1) {
-        return callback(new Error("Not allowed by CORS"), false);
-      }
-      return callback(null, true);
-    },
-    credentials: true,
-    methods: ["GET", "POST", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
-
 app.use(cookieParser());
 app.use(express.json());
 

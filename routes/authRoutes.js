@@ -1,15 +1,21 @@
-import express from 'express';
-import { register, login, addContact, me, logout,refreshToken } from '../controllers/authController.js';
-import { auth } from '../middleware/auth.js';
+import { Router } from "express";
+import {
+  registerUser,
+  loginUser,
+  getCurrentUser,
+  addContact,
+  logoutUser,
+  refreshToken,
+} from "../controllers/authController.js";
+import { auth } from "../middleware/auth.js";
 
-const router = express.Router();
+const router = Router();
 
-router.post('/register', register);
-router.post('/login', login);
-router.get('/me', auth, me);
-router.post('/add-contact', auth, addContact);
-router.post('/logout', auth, logout);
-router.post('/refresh-token', refreshToken);
-
+router.post("/register", registerUser);
+router.post("/login", loginUser);
+router.get("/me", auth, getCurrentUser);
+router.post("/add-contact", auth, addContact);
+router.post("/logout", logoutUser);
+router.post("/refresh-token", refreshToken);
 
 export default router;

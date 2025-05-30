@@ -58,8 +58,8 @@ const io = new Server(server, {
 connectDB();
 
 // Define backend URLs based on environment
-const backendUrl = "https://whatsapp-backend-16.onrender.com";
-const wsBackendUrl = "wss://whatsapp-backend-16.onrender.com";
+const backendUrl = "https://whatsapp-backend-17.onrender.com";
+const wsBackendUrl = "wss://whatsapp-backend-17.onrender.com";
 
 app.use(
   helmet({

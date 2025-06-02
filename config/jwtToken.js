@@ -1,29 +1,12 @@
 import jwt from "jsonwebtoken";
 
-export const generateToken = (res, userId) => {
+export const generateToken = (userId) => {
   if (!process.env.JWT_SECRET) {
     throw new Error("JWT_SECRET is not defined");
   }
   const token = jwt.sign({ id: userId }, process.env.JWT_SECRET, {
     expiresIn: "7d",
   });
-
-  console.log("Setting JWT Cookie - Before:", {
-    token,
-    secure: process.env.NODE_ENV === "production" ? true : false,
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
-
-  res.cookie("jwt", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production" ? true : false,
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
-
-  console.log("Setting JWT Cookie - After: Cookie should be set in response");
-
   return token;
 };
 

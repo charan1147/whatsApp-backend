@@ -1,43 +1,47 @@
 import User from "../models/User.js";
-import bcrypt from "bcryptjs";
 import { generateToken, verifyToken } from "../config/jwtToken.js";
 
 export const registerUser = async (req, res) => {
+  const { email, password } = req.body;
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ error: "Email and password are required" });
-    }
-
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ error: "User already exists" });
+      return res.status(400).json({ success: false, message: "User already exists" });
     }
-
-    const user = await User.create({ email, password, contacts: [] });
-    generateToken(res, user._id);
-
-    res.status(201).json({ success: true, message: "User registered", user: { id: user._id, email: user.email } });
-  } catch (err) {
-    console.error("Register error:", err);
-    res.status(500).json({ success: false, error: "Server error" });
+    const user = new User({ email, password });
+    await user.save();
+    const token = generateToken(user._id);
+    return res.status(201).json({
+      success: true,
+      user: { id: user._id, email: user.email, contacts: user.contacts },
+      token, // Include token in response
+      message: "User registered successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Something went wrong" });
   }
 };
 
 export const loginUser = async (req, res) => {
+  const { email, password } = req.body;
   try {
-    const { email, password } = req.body;
     const user = await User.findOne({ email });
-
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      return res.status(401).json({ error: "Invalid credentials" });
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Invalid credentials" });
     }
-
-    generateToken(res, user._id);
-    res.json({ success: true, user: { id: user._id, email: user.email, contacts: user.contacts } });
-  } catch (err) {
-    console.error("Login error:", err);
-    res.status(500).json({ success: false, error: "Server error" });
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: "Invalid credentials" });
+    }
+    const token = generateToken(user._id);
+    return res.status(200).json({
+      success: true,
+      user: { id: user._id, email: user.email, contacts: user.contacts },
+      token, // Include token in response
+      message: "Logged in successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Something went wrong" });
   }
 };
 
@@ -80,21 +84,14 @@ export const addContact = async (req, res) => {
   }
 };
 
-export const logoutUser = (req, res) => {
-  try {
-    res.clearCookie("jwt", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    });
 
-    res.json({ success: true, message: "Logged out successfully" });
-  } catch (err) {
-    console.error("Logout error:", err);
-    res.status(500).json({ success: false, error: "Server error" });
+export const logoutUser = async (req, res) => {
+  try {
+    return res.status(200).json({ success: true, message: "Logged out successfully" });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Something went wrong" });
   }
 };
-
 export const refreshToken = (req, res) => {
   try {
     const token = req.cookies.jwt;

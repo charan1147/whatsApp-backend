@@ -94,6 +94,14 @@ app.use("/api/auth", authRoutes);
 app.use("/api/chat", chatRoutes);
 
 io.on("connection", (socket) => {
+  const token = socket.handshake.auth.token;
+  const decoded = verifyToken(token);
+  if (!decoded) {
+    console.log("Socket authentication failed");
+    socket.disconnect();
+    return;
+  }
+  socket.userId = decoded.id;
   console.log("New client connected");
 
   socket.on("register", (userId) => {
@@ -103,7 +111,8 @@ io.on("connection", (socket) => {
 
   socket.on("sendMessage", async (message) => {
     try {
-      const { receiver, content, sender } = message;
+      const { receiver, content } = message;
+      const sender = socket.userId;
       const newMessage = new Message({
         sender,
         receiver,

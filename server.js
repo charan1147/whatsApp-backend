@@ -16,7 +16,7 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-// Define allowedOrigins
+// Define allowed origins for CORS
 const allowedOrigins = [
   process.env.FRONTEND_URL || "https://app-like-chatapp.netlify.app",
 ].filter(Boolean);
@@ -24,7 +24,7 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      console.log("API Request Origin:", origin); // Add logging
+      console.log("API Request Origin:", origin);
       console.log("Allowed Origins:", allowedOrigins);
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
@@ -57,9 +57,9 @@ const io = new Server(server, {
 
 connectDB();
 
-// Define backend URLs based on environment
-const backendUrl = "https://whatsapp-backend-18.onrender.com";
-const wsBackendUrl = "wss://whatsapp-backend-18.onrender.com";
+// Define backend URLs for CSP
+const backendUrl = "https://whatsapp-backend-19.onrender.com";
+const wsBackendUrl = "wss://whatsapp-backend-19.onrender.com";
 
 app.use(
   helmet({
@@ -72,18 +72,23 @@ app.use(
           ...allowedOrigins,
           backendUrl,
           wsBackendUrl,
-          "https://*.onrender.com", // Allow all subdomains of onrender.com
+          "https://*.onrender.com",
         ],
-        styleSrc: ["'self'", "'unsafe-inline'"], // Allow inline styles if needed
+        styleSrc: ["'self'", "'unsafe-inline'"],
       },
     },
     crossOriginResourcePolicy: { policy: "cross-origin" },
   })
 );
 
-app.use(morgan("dev"));
+app.use(morgan("combined"));
 app.use(cookieParser());
 app.use(express.json());
+
+// Health check endpoint for Render
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "OK" });
+});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/chat", chatRoutes);
@@ -124,9 +129,20 @@ io.on("connection", (socket) => {
     socket.to(data.to).emit("iceCandidate", data.candidate);
   });
 
+  socket.on("logout", ({ userId }) => {
+    console.log(`User ${userId} logged out`);
+    socket.leave(userId);
+  });
+
   socket.on("disconnect", () => {
     console.log("Client disconnected");
   });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error("Global Error Handler:", err);
+  res.status(500).json({ success: false, error: "Something went wrong" });
 });
 
 const PORT = process.env.PORT || 5013;

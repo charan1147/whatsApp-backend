@@ -58,8 +58,8 @@ const io = new Server(server, {
 connectDB();
 
 // Define backend URLs for CSP
-const backendUrl = "https://whatsapp-backend-19.onrender.com";
-const wsBackendUrl = "wss://whatsapp-backend-19.onrender.com";
+const backendUrl = "https://whatsapp-backend-20.onrender.com";
+const wsBackendUrl = "wss://whatsapp-backend-20.onrender.com";
 
 app.use(
   helmet({

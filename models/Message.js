@@ -7,7 +7,7 @@ const messageSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now },
 });
 
-messageSchema.index({ sender: 1, receiver: 1, timestamp: 1 }); // Optimize queries in getMessages
+messageSchema.index({ sender: 1, receiver: 1, timestamp: 1 });
 
 const Message = mongoose.model("Message", messageSchema);
 

@@ -77,8 +77,8 @@ app.use(
 
 app.options("*", cors());
 
-const backendUrl = "https://whatsapp-backend-20.onrender.com";
-const wsBackendUrl = "wss://whatsapp-backend-20.onrender.com";
+const backendUrl = "https://whatsapp-backend-21.onrender.com";
+const wsBackendUrl = "wss://whatsapp-backend-21.onrender.com";
 
 app.use(
   helmet({
